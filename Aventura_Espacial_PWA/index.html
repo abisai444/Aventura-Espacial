@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aventura Espacial: Valor Posicional</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e1b4b">
+<style>
+  body {
+    font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e1b4b, #311042);
+    color: #ffffff;
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    box-sizing: border-box;
+  }
+  .card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    border: 3px solid #6366f1;
+    border-radius: 24px;
+    max-width: 650px;
+    width: 100%;
+    padding: 25px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.5);
+    text-align: center;
+  }
+  h1 { color: #facc15; margin-top: 0; font-size: 1.8rem; }
+  h2 { color: #38bdf8; font-size: 1.4rem; }
+  .btn {
+    background: #ec4899;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    margin: 10px 5px;
+    transition: 0.2s;
+    box-shadow: 0 4px 12px rgba(236,72,153,0.4);
+  }
+  .btn:hover { transform: scale(1.05); background: #f43f5e; }
+  .option-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: #334155;
+    margin: 8px 0;
+    padding: 12px 18px;
+    border-radius: 14px;
+    font-size: 1rem;
+    border: 2px solid #475569;
+  }
+  .option-btn:hover { background: #475569; border-color: #38bdf8; }
+  .gem-counter {
+    background: #fbbf24;
+    color: #78350f;
+    padding: 6px 16px;
+    border-radius: 20px;
+    display: inline-block;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+  }
+  .review-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 0.95rem;
+  }
+  .review-table th, .review-table td {
+    border: 1px solid #6366f1;
+    padding: 8px;
+  }
+  .review-table th { background: rgba(99,102,241,0.3); }
+  .feedback {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 1rem;
+  }
+  .feedback.correct { background: #065f46; color: #6ee7b7; border: 1px solid #10b981; }
+  .feedback.wrong { background: #881337; color: #fca5a5; border: 1px solid #f43f5e; }
+</style>
+</head>
+<body>
+
+<div class="card" id="game-card">
+  <!-- Pantalla 1: Repaso -->
+  <div id="screen-review">
+    <div class="gem-counter">💎 Gemas acumuladas: <span id="gems-display">0</span></div>
+    <h1>🤖 Zona de Entrenamiento con Cosmo</h1>
+    <p>¡Hola cadete espacial! Recuerda que <strong>el valor de un número depende del lugar donde se siente:</strong></p>
+    
+    <table class="review-table">
+      <tr><th>Casa</th><th>Nombre</th><th>¿Cuánto vale cada uno?</th></tr>
+      <tr><td><strong>U</strong></td><td>Unidades</td><td>Vale <strong>1</strong></td></tr>
+      <tr><td><strong>D</strong></td><td>Decenas</td><td>Vale <strong>10</strong></td></tr>
+      <tr><td><strong>C</strong></td><td>Centenas</td><td>Vale <strong>100</strong></td></tr>
+      <tr><td><strong>UM</strong></td><td>Unidades de Mil</td><td>Vale <strong>1.000</strong></td></tr>
+    </table>
+    
+    <p>En el número <strong>3.425</strong>: El 4 está en las Centenas, ¡así que vale <strong>400</strong>!</p>
+    <button class="btn" onclick="startTransition()">¡Entendido, vamos a la misión! 🚀</button>
+  </div>
+
+  <!-- Pantalla 2: Transición -->
+  <div id="screen-transition" style="display:none;">
+    <h1>🚨 ¡Alerta en la Galaxia!</h1>
+    <p style="font-size: 1.2rem;">El extraterrestre <em>Desordenador</em> desarmó los motores de la nave y regó <strong>100 Gemas Estelares 💎</strong> en 3 misiones.</p>
+    <p>¿Nos ayudas a descifrar los números para salvar el viaje?</p>
+    <button class="btn" onclick="startMissions()">¡Encender Motores y Jugar! 🛸</button>
+  </div>
+
+  <!-- Pantalla 3: Preguntas -->
+  <div id="screen-quiz" style="display:none;">
+    <div class="gem-counter">💎 Gemas: <span id="gems-quiz">0</span> / 100</div>
+    <div id="mission-tag" style="color: #38bdf8; font-weight: bold;"></div>
+    <h2 id="question-text"></h2>
+    <div id="options-container"></div>
+    <div id="feedback-container" style="display:none;" class="feedback"></div>
+    <button id="next-btn" class="btn" style="display:none; margin-top:15px;" onclick="nextQuestion()">Siguiente reto ➔</button>
+  </div>
+
+  <!-- Pantalla 4: Resultados -->
+  <div id="screen-final" style="display:none;">
+    <h1>🎉 ¡Misión Culminada!</h1>
+    <div class="gem-counter" style="font-size: 1.4rem;">💎 Total obtenido: <span id="final-gems"></span> / 100</div>
+    <h2 id="final-rank"></h2>
+    <p id="final-message" style="font-size: 1.1rem; line-height: 1.5;"></p>
+    <button class="btn" onclick="location.reload()">Jugar de nuevo 🔄</button>
+  </div>
+</div>
+
+<script>
+  let gems = 0;
+  let currentQ = 0;
+
+  const questions = [
+    {
+      mission: "Misión 1: El Inspector de Dígitos",
+      q: "En el número 4.725 km/h de velocidad, ¿cuánto vale el dígito 7?",
+      options: [
+        { text: "A) Vale 7", correct: false, expl: "El 7 está en las Centenas, no en las Unidades." },
+        { text: "B) Vale 70", correct: false, expl: "El 7 está en la tercera posición (Centenas), no en las Decenas." },
+        { text: "C) Vale 700", correct: true, expl: "¡Exacto! Ocupa la casilla de las Centenas (7 x 100 = 700)." }
+      ],
+      points: 15
+    },
+    {
+      mission: "Misión 1: El Inspector de Dígitos",
+      q: "En el número 3.189, ¿qué dígito está en la casa de las Decenas (D)?",
+      options: [
+        { text: "A) El dígito 8", correct: true, expl: "¡Muy bien! Contando de derecha a izquierda: 9 es Unidad y 8 es Decena." },
+        { text: "B) El dígito 1", correct: false, expl: "El dígito 1 está en las Centenas." },
+        { text: "C) El dígito 9", correct: false, expl: "El 9 es la primera casilla de la derecha, o sea, Unidades." }
+      ],
+      points: 15
+    },
+    {
+      mission: "Misión 2: El Decodificador de Números",
+      q: "¿Qué número se forma con 5 UM + 3 C + 0 D + 6 U?",
+      options: [
+        { text: "A) 536", correct: false, expl: "Ese número no tiene Unidades de Mil. El correcto es 5.306." },
+        { text: "B) 5.306", correct: true, expl: "¡Brillante! 5.000 + 300 + 0 + 6 da exactamente 5.306." },
+        { text: "C) 5.360", correct: false, expl: "En 5.360 el 6 está en las Decenas, pero la pista decía 6 Unidades." }
+      ],
+      points: 15
+    },
+    {
+      mission: "Misión 2: El Decodificador de Números",
+      q: "¿Cómo desarmas en suma el número 8.420?",
+      options: [
+        { text: "A) 8.000 + 400 + 20", correct: true, expl: "¡Excelente! 8 UM (8.000) + 4 C (400) + 2 D (20)." },
+        { text: "B) 800 + 40 + 2", correct: false, expl: "Cuidado con los ceros: el 8 vale 8.000 porque son miles." },
+        { text: "C) 8.000 + 40 + 2", correct: false, expl: "El 4 está en las centenas, así que debe ser 400." }
+      ],
+      points: 15
+    },
+    {
+      mission: "Misión 3: La Bóveda del Tesoro",
+      q: "Con las tarjetas [2] [9] [4] [7], ¿cuál es el MAYOR número que puedes crear?",
+      options: [
+        { text: "A) 9.472", correct: false, expl: "El 9.742 es más grande porque tiene 7 centenas en lugar de 4." },
+        { text: "B) 9.742", correct: true, expl: "¡Gran estrategia! Ordenaste los números de mayor a menor según su valor." },
+        { text: "C) 7.942", correct: false, expl: "Podías poner el 9 en las Unidades de Mil para que fuera más alto." }
+      ],
+      points: 20
+    },
+    {
+      mission: "Misión 3: La Bóveda del Tesoro",
+      q: "Si la caja fuerte tiene 4 Centenas y 12 Unidades, ¿cuántas gemas hay en total?",
+      options: [
+        { text: "A) 412 gemas", correct: true, expl: "¡Correcto! 4 Centenas son 400, más 12 Unidades = 412." },
+        { text: "B) 4.012 gemas", correct: false, expl: "4 Centenas son 400, no 4.000 (eso serían 4 Unidades de Mil)." },
+        { text: "C) 420 gemas", correct: false, expl: "400 + 12 es 412, no 420." }
+      ],
+      points: 20
+    }
+  ];
+
+  function startTransition() {
+    document.getElementById('screen-review').style.display = 'none';
+    document.getElementById('screen-transition').style.display = 'block';
+  }
+
+  function startMissions() {
+    document.getElementById('screen-transition').style.display = 'none';
+    document.getElementById('screen-quiz').style.display = 'block';
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const qData = questions[currentQ];
+    document.getElementById('mission-tag').innerText = qData.mission;
+    document.getElementById('question-text').innerText = qData.q;
+    document.getElementById('gems-quiz').innerText = gems;
+
+    const optContainer = document.getElementById('options-container');
+    optContainer.innerHTML = '';
+    document.getElementById('feedback-container').style.display = 'none';
+    document.getElementById('next-btn').style.display = 'none';
+
+    qData.options.forEach(opt => {
+      const b = document.createElement('button');
+      b.className = 'btn option-btn';
+      b.innerText = opt.text;
+      b.onclick = () => selectOption(opt);
+      optContainer.appendChild(b);
+    });
+  }
+
+  function selectOption(opt) {
+    const btns = document.querySelectorAll('.option-btn');
+    btns.forEach(b => b.disabled = true);
+
+    const fb = document.getElementById('feedback-container');
+    fb.style.display = 'block';
+
+    if (opt.correct) {
+      gems += questions[currentQ].points;
+      document.getElementById('gems-quiz').innerText = gems;
+      fb.className = 'feedback correct';
+      fb.innerHTML = `🎉 <strong>¡CORRECTO! (+${questions[currentQ].points} Gemas 💎)</strong><br>${opt.expl}`;
+    } else {
+      fb.className = 'feedback wrong';
+      fb.innerHTML = `❌ <strong>¡CASI!</strong><br>${opt.expl}`;
+    }
+
+    document.getElementById('next-btn').style.display = 'inline-block';
+  }
+
+  function nextQuestion() {
+    currentQ++;
+    if (currentQ < questions.length) {
+      renderQuestion();
+    } else {
+      showFinal();
+    }
+  }
+
+  function showFinal() {
+    document.getElementById('screen-quiz').style.display = 'none';
+    document.getElementById('screen-final').style.display = 'block';
+    document.getElementById('final-gems').innerText = gems;
+
+    const rank = document.getElementById('final-rank');
+    const msg = document.getElementById('final-message');
+
+    if (gems >= 80) {
+      rank.innerText = "🌟 ¡COMANDANTE SUPREMO DE NUMERIA!";
+      rank.style.color = "#facc15";
+      msg.innerText = "¡Misión completada con honores! Tienes un superpoder increíble para descifrar el valor de los números. ¡Cosmo y la nave están a salvo gracias a ti!";
+    } else if (gems >= 50) {
+      rank.innerText = "🚀 ¡PILOTO ESTELAR EXPERTO!";
+      rank.style.color = "#38bdf8";
+      msg.innerText = "¡Muy buen trabajo! Conoces muy bien cómo funcionan las casas de los números. Sigue practicando y muy pronto alcanzarás el rango supremo.";
+    } else {
+      rank.innerText = "⭐ ¡CADETE EN ENTRENAMIENTO!";
+      rank.style.color = "#f43f5e";
+      msg.innerText = "¡Buen esfuerzo en tu primera misión! Los grandes exploradores aprenden repasando. ¡Vuelve a intentarlo para conseguir todas las gemas!";
+    }
+  }
+</script>
+
+<!-- Script para registrar el Service Worker y habilitar la instalación PWA -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('Service Worker registrado correctamente.', reg))
+        .catch(err => console.warn('Error al registrar Service Worker.', err));
+    });
+  }
+</script>
+</body>
+</html>
